@@ -125,7 +125,13 @@ function importProgress(e){
         saveCards(cards);
         sess={reviewed:0,correct:0};
         showToast('✅ Fortschritt geladen!');
-        advance();
+        (async()=>{
+  if(getTok()){
+    const c=await gistLoad();
+    if(c){cards=c;saveCards(c);}
+  }
+  advance();
+})();
       }else{
         showToast('❌ Datei passt nicht (falsche Vokabelzahl)');
       }
@@ -283,8 +289,13 @@ function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt
 function escAttr(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
 function renderSaveBar(){
-  const d=new Date();
-  const ts=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const syncMap={idle:'☁️ Sync aktiv',saving:'🔄 Speichern…',saved:'✅ Gespeichert',error:'⚠️ Fehler'};
+  return `<div class="save-bar">
+  <span id="sync-lbl" style="flex:1;font-size:12px;color:#888">${syncMap[syncSt]}</span>
+  <button class="save-btn btn-import" onclick="gistLoad().then(c=>{if(c){cards=c;saveCards(c);showToast('✅ Geladen!');advance();}else showToast('Nichts gefunden.');})">↓ Laden</button>
+  <button class="save-btn btn-export" onclick="gistSave(cards).then(()=>showToast('✅ Gespeichert!'))">↑ Speichern</button>
+</div>`;
+}:${String(d.getMinutes()).padStart(2,'0')}`;
   const learned=cards.filter(c=>c.state!=='new').length;
   return `<div class="save-bar">
   <span>💾 Fortschritt sichern — ${learned} von ${VOCAB.length} Karten gelernt</span>
